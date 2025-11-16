@@ -1,12 +1,9 @@
 // src/services/api.js
-
 import axios from "axios";
 import storage from "../utils/storage";
 
-// ⚙️ Replace with your local backend IP (run `ipconfig` to find it)
 const BASE_URL = "http://10.234.213.187:5000/api";
 
-// 🌐 Axios instance configuration
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -14,7 +11,6 @@ const api = axios.create({
   },
 });
 
-// 🧾 Request interceptor → Add auth token automatically
 api.interceptors.request.use(
   async (config) => {
     const token = await storage.getToken();
@@ -26,7 +22,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 🚨 Response interceptor → Clear token if expired
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -37,10 +32,6 @@ api.interceptors.response.use(
   }
 );
 
-//
-// =========================
-// 🔐 AUTH API
-// =========================
 export const authAPI = {
   signup: async (name, email, password) => {
     const response = await api.post("/auth/signup", { name, email, password });
@@ -52,10 +43,6 @@ export const authAPI = {
   },
 };
 
-//
-// =========================
-// 💸 EXPENSE API
-// =========================
 export const expenseAPI = {
   addExpense: async (expenseData) => {
     const response = await api.post("/expenses", expenseData);
@@ -71,10 +58,6 @@ export const expenseAPI = {
   },
 };
 
-//
-// =========================
-// 💰 INCOME API (Salary or Other Incomes)
-// =========================
 export const incomeAPI = {
   addIncome: async (incomeData) => {
     const response = await api.post("/income", incomeData);
@@ -88,12 +71,13 @@ export const incomeAPI = {
     const response = await api.delete(`/income/${id}`);
     return response.data;
   },
+  getTotalIncome: async () => {
+    const response = await api.get("/income/total");
+    return response.data;
+  },
+  // REMOVED deductFromIncome — NOT NEEDED
 };
 
-//
-// =========================
-// 🏦 LOAN API (Lending / Borrowing Module)
-// =========================
 export const loanAPI = {
   addLoan: async (loanData) => {
     const response = await api.post("/loans", loanData);
@@ -124,31 +108,21 @@ export const loanAPI = {
   },
 };
 
-//
-// =========================
-// 🔔 NOTIFICATION API
-// =========================
 export const notificationAPI = {
-  getNotifications: async (unreadOnly = false) => {
-    const response = await api.get("/notifications", {
-      params: { unreadOnly },
-    });
+  getNotifications: async () => {
+    const response = await api.get("/notifications");
     return response.data;
   },
   markAsRead: async (id) => {
-    const response = await api.put(`/notifications/${id}/read`);
+    const response = await api.patch(`/notifications/${id}/read`);
     return response.data;
   },
   markAllAsRead: async () => {
-    const response = await api.put("/notifications/read-all");
+    const response = await api.patch("/notifications/read-all");
     return response.data;
   },
 };
 
-//
-// =========================
-// 📊 ANALYTICS API (Charts + Suggestions)
-// =========================
 export const analyticsAPI = {
   getDashboard: async () => {
     const response = await api.get("/analytics/dashboard");
@@ -160,6 +134,11 @@ export const analyticsAPI = {
   },
   getSuggestions: async () => {
     const response = await api.get("/analytics/suggestions");
+    return response.data;
+  },
+  // NEW: AVAILABLE BALANCE
+  getAvailableBalance: async () => {
+    const response = await api.get("/analytics/available-balance");
     return response.data;
   },
 };
