@@ -1,3 +1,4 @@
+// src/screens/DashboardScreen.js
 import React, { useState, useCallback, useRef } from "react";
 import {
   View,
@@ -7,7 +8,7 @@ import {
   Dimensions,
   ImageBackground,
 } from "react-native";
-import { Card, Text, Button, Avatar, Chip } from "react-native-paper";
+import { Card, Text, Button, Avatar, Chip, IconButton } from "react-native-paper";
 import { LineChart } from "react-native-chart-kit";
 import ConfettiCannon from "react-native-confetti-cannon";
 import { analyticsAPI } from "../services/api";
@@ -119,6 +120,36 @@ const DashboardScreen = ({ navigation }) => {
             >
               Logout
             </Button>
+          </View>
+
+          {/* TOP ICONS: BELL (LEFT) + LOAN (RIGHT) */}
+          <View style={styles.headerIcons}>
+            {/* NOTIFICATION BELL WITH BADGE */}
+            <View style={styles.bellContainer}>
+              <IconButton
+                icon="bell"
+                iconColor="#fff"
+                size={24}
+                onPress={() => navigation.navigate('NotificationScreen')}
+                style={styles.leftIcon}
+              />
+              {analytics?.unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {analytics.unreadCount}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* + LOAN ICON */}
+            <IconButton
+              icon="plus"
+              iconColor="#fff"
+              size={24}
+              onPress={() => navigation.navigate('LoanTypeSelector')}
+              style={styles.rightIcon}
+            />
           </View>
 
           {/* Balance Card */}
@@ -252,7 +283,7 @@ const DashboardScreen = ({ navigation }) => {
           {suggestions?.suggestions?.length > 0 && (
             <Card style={styles.card}>
               <Card.Content>
-                <Text style={styles.cardTitle}>Pocket picks💡</Text>
+                <Text style={styles.cardTitle}>Pocket picks</Text>
                 {suggestions.suggestions.map((s, i) => (
                   <View
                     key={i}
@@ -266,12 +297,12 @@ const DashboardScreen = ({ navigation }) => {
                   >
                     <Text style={styles.suggestionIcon}>
                       {s.type === "warning"
-                        ? "⚠️"
+                        ? "Warning"
                         : s.type === "success"
-                        ? "✅"
+                        ? "Success"
                         : s.type === "tip"
-                        ? "💡"
-                        : "⏰"}
+                        ? "Tip"
+                        : "Reminder"}
                     </Text>
                     <Text style={styles.suggestionText}>{s.message}</Text>
                   </View>
@@ -307,12 +338,10 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
   },
-
   userNameInline: {
     fontWeight: "900",
     color: "#f3f2ecff",
   },
-
   logoutBtn: {
     borderColor: "#fff",
     borderWidth: 1,
@@ -385,6 +414,45 @@ const styles = StyleSheet.create({
   success: { backgroundColor: "#D4EDDA" },
   tip: { backgroundColor: "#E0F7FA" },
   reminder: { backgroundColor: "#FFF0F5" },
+
+  // BELL BADGE STYLES
+  headerIcons: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    zIndex: 10,
+  },
+  bellContainer: {
+    position: 'relative',
+  },
+  leftIcon: {
+    backgroundColor: 'rgba(37, 99, 235, 0.85)',
+    margin: 0,
+  },
+  rightIcon: {
+    backgroundColor: 'rgba(37, 99, 235, 0.85)',
+    margin: 0,
+  },
+  badge: {
+    position: 'absolute',
+    right: 6,
+    top: 6,
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
 });
 
 export default DashboardScreen;
