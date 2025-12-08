@@ -2,7 +2,7 @@
 import axios from "axios";
 import storage from "../utils/storage";
 
-const BASE_URL = "http://10.234.213.187:5000/api";
+const BASE_URL = "http://10.190.57.187:5000/api";
 
 const api = axios.create({
   baseURL: BASE_URL,

@@ -1,25 +1,23 @@
 // src/navigation/AppNavigator.js
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
 
 // === YOUR EXISTING SCREENS ===
-import HomeScreen from '../screens/HomeScreen';
-import SignInScreen from '../screens/SignInScreen';
-import SignUpScreen from '../screens/SignUpScreen';
-import DashboardScreen from '../screens/DashboardScreen';
-import AddExpenseScreen from '../screens/AddExpenseScreen';
-import ExpenseListScreen from '../screens/ExpenseListScreen';
-import AddIncomeScreen from '../screens/AddIncomeScreen';
-import IncomeListScreen from '../screens/IncomeListScreen';
+import HomeScreen from "../screens/HomeScreen";
+import SignInScreen from "../screens/SignInScreen";
+import SignUpScreen from "../screens/SignUpScreen";
+import DashboardScreen from "../screens/DashboardScreen";
+import AddExpenseScreen from "../screens/AddExpenseScreen";
+import ExpenseListScreen from "../screens/ExpenseListScreen";
+import AddIncomeScreen from "../screens/AddIncomeScreen";
+import IncomeListScreen from "../screens/IncomeListScreen";
 
 // === LOAN FLOW SCREENS ===
-import LoanTypeSelector from '../screens/LoanTypeSelector';
-import AddLendingScreen from '../screens/AddLendingScreen';
-import AddBorrowingScreen from '../screens/AddBorrowingScreen';
-import NotificationScreen from '../screens/NotificationScreen'; // ← ADDED
-import NotificationBell from '../components/NotificationBell';
-
+import LoanTypeSelector from "../screens/LoanTypeSelector";
+import AddLendingScreen from "../screens/AddLendingScreen";
+import AddBorrowingScreen from "../screens/AddBorrowingScreen";
+import NotificationScreen from "../screens/NotificationScreen";
 
 const Stack = createStackNavigator();
 
@@ -44,9 +42,14 @@ const AppNavigator = () => {
         {/* LOAN FLOW */}
         <Stack.Screen name="LoanTypeSelector" component={LoanTypeSelector} />
         <Stack.Screen name="AddLendingScreen" component={AddLendingScreen} />
-        <Stack.Screen name="AddBorrowingScreen" component={AddBorrowingScreen} />
-        <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
-        
+        <Stack.Screen
+          name="AddBorrowingScreen"
+          component={AddBorrowingScreen}
+        />
+        <Stack.Screen
+          name="NotificationScreen"
+          component={NotificationScreen}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
