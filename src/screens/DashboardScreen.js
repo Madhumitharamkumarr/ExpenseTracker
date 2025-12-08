@@ -8,8 +8,15 @@ import {
   Dimensions,
   ImageBackground,
 } from "react-native";
-import { Card, Text, Button, Avatar, Chip, IconButton } from "react-native-paper";
-import { LineChart } from "react-native-chart-kit";
+import {
+  Card,
+  Text,
+  Button,
+  Avatar,
+  Chip,
+  IconButton,
+} from "react-native-paper";
+import { LineChart, PieChart } from "react-native-chart-kit";
 import ConfettiCannon from "react-native-confetti-cannon";
 import { analyticsAPI } from "../services/api";
 import storage from "../utils/storage";
@@ -21,10 +28,21 @@ const DashboardScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [chartData, setChartData] = useState(null);
+  const [pieData, setPieData] = useState([]);
   const [suggestions, setSuggestions] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [chartPeriod, setChartPeriod] = useState("week");
   const confettiRef = useRef(null);
+
+  // NEW: Get nice title
+  const getPeriodTitle = () => {
+    const now = new Date();
+    if (chartPeriod === "week") return "This Week";
+    if (chartPeriod === "month")
+      return now.toLocaleString("default", { month: "long", year: "numeric" });
+    if (chartPeriod === "year") return now.getFullYear().toString();
+    return "This Week";
+  };
 
   const loadUserData = async () => {
     const userData = await storage.getUser();
@@ -39,7 +57,31 @@ const DashboardScreen = ({ navigation }) => {
         analyticsAPI.getSuggestions(),
       ]);
 
-      if (dashboardRes.success) setAnalytics(dashboardRes.data);
+      if (dashboardRes.success) {
+        setAnalytics(dashboardRes.data);
+
+        // PIE CHART DATA
+        const cats = dashboardRes.data.expensesByCategory || {};
+        const pie = Object.entries(cats)
+          .filter(([_, amt]) => amt > 0)
+          .map(([name, amount], i) => ({
+            name,
+            amount,
+            color: [
+              "#FF6B6B",
+              "#4ECDC4",
+              "#45B7D1",
+              "#96CEB4",
+              "#FECA57",
+              "#DDA0DD",
+              "#98D8C8",
+            ][i % 7],
+            legendFontColor: "#333",
+            legendFontSize: 14,
+          }));
+        setPieData(pie);
+      }
+
       if (chartRes.success) setChartData(chartRes.data);
       if (suggestionsRes.success) setSuggestions(suggestionsRes.data);
     } catch (error) {
@@ -122,32 +164,28 @@ const DashboardScreen = ({ navigation }) => {
             </Button>
           </View>
 
-          {/* TOP ICONS: BELL (LEFT) + LOAN (RIGHT) */}
+          {/* TOP ICONS */}
           <View style={styles.headerIcons}>
-            {/* NOTIFICATION BELL WITH BADGE */}
             <View style={styles.bellContainer}>
               <IconButton
                 icon="bell"
                 iconColor="#fff"
                 size={24}
-                onPress={() => navigation.navigate('NotificationScreen')}
+                onPress={() => navigation.navigate("NotificationScreen")}
                 style={styles.leftIcon}
               />
               {analytics?.unreadCount > 0 && (
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {analytics.unreadCount}
-                  </Text>
+                  <Text style={styles.badgeText}>{analytics.unreadCount}</Text>
                 </View>
               )}
             </View>
 
-            {/* + LOAN ICON */}
             <IconButton
               icon="plus"
               iconColor="#fff"
               size={24}
-              onPress={() => navigation.navigate('LoanTypeSelector')}
+              onPress={() => navigation.navigate("LoanTypeSelector")}
               style={styles.rightIcon}
             />
           </View>
@@ -194,7 +232,6 @@ const DashboardScreen = ({ navigation }) => {
             >
               Expenses
             </Button>
-
             <Button
               icon="plus"
               mode="contained"
@@ -204,7 +241,6 @@ const DashboardScreen = ({ navigation }) => {
             >
               Expense
             </Button>
-
             <Button
               icon="cash-plus"
               mode="contained"
@@ -216,7 +252,7 @@ const DashboardScreen = ({ navigation }) => {
             </Button>
           </View>
 
-          {/* Chart */}
+          {/* LINE CHART */}
           {chartData && (
             <Card style={styles.card}>
               <Card.Content>
@@ -243,6 +279,16 @@ const DashboardScreen = ({ navigation }) => {
                     >
                       Month
                     </Chip>
+                    <Chip
+                      selected={chartPeriod === "year"}
+                      onPress={() => setChartPeriod("year")}
+                      style={[
+                        styles.chip,
+                        chartPeriod === "year" && styles.chipSelected,
+                      ]}
+                    >
+                      Year
+                    </Chip>
                   </View>
                 </View>
                 <LineChart
@@ -251,13 +297,12 @@ const DashboardScreen = ({ navigation }) => {
                     datasets: [
                       {
                         data: chartData.income,
-                        color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`,
+                        color: () => "#4CAF50",
                         strokeWidth: 2,
                       },
                       {
                         data: chartData.expenses,
-                        color: (opacity = 1) =>
-                          `rgba(255, 107, 107, ${opacity})`,
+                        color: () => "#FF5252",
                         strokeWidth: 2,
                       },
                     ],
@@ -268,13 +313,66 @@ const DashboardScreen = ({ navigation }) => {
                   chartConfig={{
                     backgroundGradientFrom: "#fff",
                     backgroundGradientTo: "#fff",
-                    color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+                    color: () => "#000",
                     decimalPlaces: 0,
-                    style: { borderRadius: 16 },
                   }}
                   bezier
                   style={{ marginVertical: 8, borderRadius: 16 }}
                 />
+              </Card.Content>
+            </Card>
+          )}
+
+          {/* PIE CHART — CHANGES WITH TOGGLE + MONTH NAME */}
+          {pieData.length > 0 && (
+            <Card style={styles.card}>
+              <Card.Content>
+                <Text style={styles.cardTitle}>
+                  Expenses by Category ({getPeriodTitle()})
+                </Text>
+                <PieChart
+                  data={pieData}
+                  width={Dimensions.get("window").width - 40}
+                  height={220}
+                  chartConfig={{ color: () => "#000" }}
+                  accessor="amount"
+                  backgroundColor="transparent"
+                  paddingLeft="15"
+                  absolute
+                />
+                <View
+                  style={{
+                    marginTop: 15,
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    justifyContent: "center",
+                  }}
+                >
+                  {pieData.map((item, i) => (
+                    <View
+                      key={i}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        marginRight: 15,
+                        marginVertical: 4,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 14,
+                          height: 14,
+                          backgroundColor: item.color,
+                          borderRadius: 7,
+                          marginRight: 6,
+                        }}
+                      />
+                      <Text style={{ color: "#444", fontSize: 13 }}>
+                        {item.name}: ₹{item.amount.toFixed(0)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
               </Card.Content>
             </Card>
           )}
@@ -290,20 +388,8 @@ const DashboardScreen = ({ navigation }) => {
                     style={[
                       styles.suggestionRow,
                       s.type === "warning" && styles.warning,
-                      s.type === "success" && styles.success,
-                      s.type === "tip" && styles.tip,
-                      s.type === "reminder" && styles.reminder,
                     ]}
                   >
-                    <Text style={styles.suggestionIcon}>
-                      {s.type === "warning"
-                        ? "Warning"
-                        : s.type === "success"
-                        ? "Success"
-                        : s.type === "tip"
-                        ? "Tip"
-                        : "Reminder"}
-                    </Text>
                     <Text style={styles.suggestionText}>{s.message}</Text>
                   </View>
                 ))}
@@ -334,14 +420,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#f3f2ecff",
     textAlign: "center",
-    textShadowColor: "rgba(0,0,0,0.2)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
   },
-  userNameInline: {
-    fontWeight: "900",
-    color: "#f3f2ecff",
-  },
+  userNameInline: { fontWeight: "900", color: "#f3f2ecff" },
   logoutBtn: {
     borderColor: "#fff",
     borderWidth: 1,
@@ -408,51 +488,33 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     flexWrap: "wrap",
   },
-  suggestionIcon: { marginRight: 8, fontSize: 16, lineHeight: 20 },
   suggestionText: { fontSize: 14, color: "#333", flexShrink: 1 },
   warning: { backgroundColor: "#FFF3CD" },
   success: { backgroundColor: "#D4EDDA" },
-  tip: { backgroundColor: "#E0F7FA" },
-  reminder: { backgroundColor: "#FFF0F5" },
-
-  // BELL BADGE STYLES
   headerIcons: {
-    position: 'absolute',
+    position: "absolute",
     top: 50,
     left: 20,
     right: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     zIndex: 10,
   },
-  bellContainer: {
-    position: 'relative',
-  },
-  leftIcon: {
-    backgroundColor: 'rgba(37, 99, 235, 0.85)',
-    margin: 0,
-  },
-  rightIcon: {
-    backgroundColor: 'rgba(37, 99, 235, 0.85)',
-    margin: 0,
-  },
+  bellContainer: { position: "relative" },
+  leftIcon: { backgroundColor: "rgba(37, 99, 235, 0.85)", margin: 0 },
+  rightIcon: { backgroundColor: "rgba(37, 99, 235, 0.85)", margin: 0 },
   badge: {
-    position: 'absolute',
+    position: "absolute",
     right: 6,
     top: 6,
-    backgroundColor: '#FF3B30',
+    backgroundColor: "#FF3B30",
     borderRadius: 10,
     minWidth: 20,
     height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 6,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  badgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
+  badgeText: { color: "#fff", fontSize: 12, fontWeight: "bold" },
 });
 
 export default DashboardScreen;
